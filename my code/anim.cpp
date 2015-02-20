@@ -374,7 +374,7 @@ int main()
 	glutInitWindowSize     (g_width, g_height);
 	glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutCreateWindow(title);
-	#if !defined(__APPLE__) && !defined(EMSCRIPTEN) && !defined(_WIN32)
+	#if !defined(__APPLE__) && !defined(EMSCRIPTEN)
 		glewExperimental = GL_TRUE;
 		glewInit();
 	#endif

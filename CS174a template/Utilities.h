@@ -80,14 +80,22 @@ public:
 	}
 } TM;
 #endif
+//end windows
 
+#ifdef __linux__
+#include <GL/glew.h>
+#include <GL/glut.h>
+#else
 #include "../GL/freeglut.h"
+#endif
 
 #include <iostream>
 #include <fstream>
 #include <cassert>
 #include <stack>
-#include "../CS174a template/mat_and_vec.h"
+#include "../CS174a template/Mat_and_Vec.h"
+
+
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 typedef vec4 color4;

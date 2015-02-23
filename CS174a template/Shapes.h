@@ -35,6 +35,7 @@ point4 vertices[8] = {
 int Index = 0;
 void quad( int a, int b, int c, int d, const point3& normal )
 {
+	//this is flat shading; set all normals to the same one
     cubePoints[Index] = vertices[a]; cubeNormals[Index] = normal; 
     cubeUV[Index] = point2(0, 1); Index++;
     cubePoints[Index] = vertices[b]; cubeNormals[Index] = normal;
@@ -157,7 +158,8 @@ void generateSphere(GLuint program, ShapeData* sphereData)
     // Normals
     for (int i = 0; i < numSphereVertices; i++)
     {
-        sphereNormals[i] = point3(spherePoints[i].x, spherePoints[i].y, spherePoints[i].z);
+        sphereNormals[i] = point3(spherePoints[i].x, spherePoints[i].y, spherePoints[i].z); 
+		//this is phong shading, unique normal per vertex
     }
     
     // TexCoords

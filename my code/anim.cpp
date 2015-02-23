@@ -139,7 +139,7 @@ void idleCallBack(void)
 	if( prev_time == 0 ) TM.Reset();
     glutPostRedisplay() ;
 }
-
+//Cylinder
 void drawCylinder()	//render a solid cylinder oriented along the Z axis; bases are of radius 1, placed at Z = 0, and at Z = 1.
 {
     glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
@@ -147,6 +147,17 @@ void drawCylinder()	//render a solid cylinder oriented along the Z axis; bases a
     glDrawArrays( GL_TRIANGLES, 0, cylData.numVertices );
 }
 
+void drawCylinder(GLuint texture)
+{
+    glBindTexture( GL_TEXTURE_2D, texture );
+    glUniform1i( uEnableTex, 1);
+    glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
+    glBindVertexArray( cylData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, cylData.numVertices );
+    glUniform1i( uEnableTex, 0);
+}
+
+//Cone
 void drawCone()	//render a solid cone oriented along the Z axis; bases are of radius 1, placed at Z = 0, and at Z = 1.
 {
     glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
@@ -154,25 +165,51 @@ void drawCone()	//render a solid cone oriented along the Z axis; bases are of ra
     glDrawArrays( GL_TRIANGLES, 0, coneData.numVertices );
 }
 
-void drawCube()		// draw a cube with dimensions 1,1,1 centered around the origin.
+void drawCone(GLuint texture)
 {
-	glBindTexture( GL_TEXTURE_2D, texture_cube );
+    glBindTexture( GL_TEXTURE_2D, texture );
     glUniform1i( uEnableTex, 1 );
     glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
+    glBindVertexArray( coneData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, coneData.numVertices );
+    glUniform1i( uEnableTex, 0);
+}
+
+//Cube
+void drawCube()
+{
+    glUniformMatrix4fv( uModelView, 1, GL_TRUE, model_view );
+    glBindVertexArray( cubeData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, cubeData.numVertices );
+}
+
+void drawCube(GLuint texture)
+{
+    glBindTexture( GL_TEXTURE_2D, texture );
+    glUniform1i( uEnableTex, 1 );
+    glUniformMatrix4fv( uModelView, 1, GL_TRUE, model_view );
     glBindVertexArray( cubeData.vao );
     glDrawArrays( GL_TRIANGLES, 0, cubeData.numVertices );
     glUniform1i( uEnableTex, 0 );
 }
 
-void drawSphere()	// draw a sphere with radius 1 centered around the origin.
+//Sphere
+void drawSphere()
 {
-	glBindTexture( GL_TEXTURE_2D, texture_earth);
+    glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
+    glBindVertexArray( sphereData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, sphereData.numVertices );
+}
+void drawSphere(GLuint texture)	// draw a sphere with radius 1 centered around the origin.
+{
+	glBindTexture( GL_TEXTURE_2D, texture);
     glUniform1i( uEnableTex, 1);
     glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
     glBindVertexArray( sphereData.vao );
     glDrawArrays( GL_TRIANGLES, 0, sphereData.numVertices );
     glUniform1i( uEnableTex, 0 );
 }
+
 
 int basis_id = 0;
 void drawOneAxis()
@@ -232,7 +269,7 @@ void drawGround(){
     set_color( .0, .8, .0 );
     model_view *= Translate	(0, -10, 0);									drawAxes(basis_id++);
     model_view *= Scale		(100, 1, 100);									drawAxes(basis_id++);
-    drawCube();
+    drawCube(texture_cube);
 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 }
 
@@ -266,7 +303,7 @@ void drawPlanets()
     set_color( .8, .0, .0 );	//model sun
     mvstack.push(model_view);
     model_view *= Scale(3);													drawAxes(basis_id++);
-    drawSphere();
+    drawSphere(texture_earth);
     model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
     
     set_color( .0, .0, .8 );	//model earth

@@ -426,17 +426,16 @@ void display(void)
     glClearColor( .1, .1, .2, 1 );
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
-	
-	model_view = LookAt(Translate(0,0,25)*eye, ref, up );
 
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
 
     // drawGround();
-    if (TIME < 5){
+    if (TIME < 8){
         drawSky();
         drawPlane();
-
+        if (TIME < 5)
+            model_view = LookAt(RotateY(72*TIME+45)*Translate(0,0,25)*eye, ref, up );
     }
     glutSwapBuffers();
 }

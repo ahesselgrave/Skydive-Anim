@@ -8,6 +8,35 @@ void generateCube(GLuint program, ShapeData* cubeData);
 void generateSphere(GLuint program, ShapeData* sphereData);
 void generateCone(GLuint program, ShapeData* coneData);
 void generateCylinder(GLuint program, ShapeData* cylData);
+void generatePropellor(GLuint program, ShapeData* propData);
+
+//----------------------------------------------------------------------------
+// Propellor
+const int numPropVertices = 20;
+point4 propPoints [numPropVertices];
+point3 propNormals[numPropVertices];
+
+point4 propVertices[12] = {
+    //centered cube vertices
+    point4( -0.5, -0.5,  0.5, 1 ), //front bottom left
+    point4( -0.5,  0.5,  0.5, 1 ), //front top left
+    point4(  0.5,  0.5,  0.5, 1 ), //front top right
+    point4(  0.5, -0.5,  0.5, 1 ), //front bottom right
+    point4( -0.5, -0.5, -0.5, 1 ), //back bottom left
+    point4( -0.5,  0.5, -0.5, 1 ), //back top left
+    point4(  0.5,  0.5, -0.5, 1 ), //back top right
+    point4(  0.5, -0.5, -0.5, 1 ), //back bottom right
+    //propellor pyramid points
+    point4(    0,  4.5,    0, 1 ), //top point
+    point4(  4.5,    0,    0, 1 ), //right point
+    point4(    0, -4.5,    0, 1 ), //bottom point
+    point4( -4.5,    0,    0, 1 ), //left point
+};
+
+void genPropTriangles(){
+    //draw faces for everything
+
+}
 
 //----------------------------------------------------------------------------
 // Cube

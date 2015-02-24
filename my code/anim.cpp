@@ -166,10 +166,14 @@ void myMotionCallBack(int x, int y)
 void idleCallBack(void)
 {
     if( !animate ) return;
-	double prev_time = TIME;
-    TIME = TM.GetElapsedTime() ;
-	if( prev_time == 0 ) TM.Reset();
-    glutPostRedisplay() ;
+    else{
+    	double prev_time = TIME;
+        TIME = TM.GetElapsedTime() ;
+        double fps = 1 / (TIME - prev_time);
+    	if( prev_time == 0 ) TM.Reset();
+        if (TIME > 0)   printf("FPS: %f\n", fps);
+        glutPostRedisplay() ;
+    }
 }
 //Cylinder
 void drawCylinder()	//render a solid cylinder oriented along the Z axis; bases are of radius 1, placed at Z = 0, and at Z = 1.
@@ -319,34 +323,37 @@ void drawSky(){
 }
 
 void drawPlane(){
-    set_color(0.8f,0.8f,0.8f);
+    set_color(1,1,1);
+    //draw body
     mvstack.push(model_view);
-        // model_view *= Translate(0,10,0);
-        //draw nose
-        mvstack.push(model_view);
-            model_view *= Scale(3,2,2);
-            model_view *= RotateY(-90);
-            drawCone();
-        model_view = mvstack.top(); mvstack.pop();
-        //draw body
-        mvstack.push(model_view);
-            model_view *= Translate(-8, 0, 0);
-            model_view *= Scale(5,2,2);
-            model_view *= RotateY(-90);
-            drawCylinder();
-        model_view = mvstack.top(); mvstack.pop();
-        //draw wings
-        mvstack.push(model_view);
-            model_view *= Translate(-8,2,0);
-            model_view *= Scale(4, 0.5, 15);
+        model_view *= Scale(14,3,2);
+        drawSphere();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw tail
+    mvstack.push(model_view);
+        model_view *= Translate(-13.75,0,0); 
+            mvstack.push(model_view); 
+            model_view *= RotateZ(20);
+            model_view *= Translate(3/sin(20),4/sin(20),0);
+            model_view *= Scale(6,8,0.5);
             drawCube();
         model_view = mvstack.top(); mvstack.pop();
+        model_view *= Translate(3,3,0);
+        model_view *= Scale(3,0.5,10);
+        drawCube();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw wings
+    mvstack.push(model_view);
+        model_view *= Translate(3,3,0);
+        model_view *= Scale(6,0.25,25);
+        drawCube();
     model_view = mvstack.top(); mvstack.pop();
 }
 
 // void drawShapes()
 // {
-// 	mvstack.push(model_view);
+
+// 	mvstack.push(model_view);q
 
 //     model_view *= Translate	( 0, 3, 0 );									drawAxes(basis_id++);
 //     model_view *= Scale		( 3, 3, 3 );									drawAxes(basis_id++);
@@ -420,7 +427,7 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
 	
-	model_view = LookAt( Translate(8,0,0)*eye, ref, up );
+	model_view = LookAt(Translate(0,0,25)*eye, ref, up );
 
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
@@ -461,7 +468,6 @@ void myKey(unsigned char key, int x, int y)
 			std::cout << "Basis: " << --basis_to_display << '\n';
 			break;
         case 'a':							// toggle animation           		
-            if(animate) std::cout << "Elapsed time " << TIME << '\n';
             animate = 1 - animate ; 
             break ;
 		case '0':							// Add code to reset your object here.

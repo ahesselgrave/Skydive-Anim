@@ -175,7 +175,7 @@ static char* readShaderFile(const char* shaderFile)
 
 GLuint LoadShaders(const char* vShaderFile, const char* fShaderFile)			// Create a GLSL program object from vertex and fragment shader files.
 {
-    struct Shader {	const char*	filename;	GLenum	type;	GLchar*		source;    }  
+    struct Shader {	const char*	filename;	GLenum	type;	GLchar*		source;    }
 		shaders[2] = {	{		vShaderFile,		GL_VERTEX_SHADER,	NULL },	
 						{		fShaderFile,		GL_FRAGMENT_SHADER, NULL }    };
 

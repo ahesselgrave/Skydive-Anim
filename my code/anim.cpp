@@ -16,7 +16,7 @@ vec4 eye( 0, 0, 15, 1), ref( 0, 0, 0, 1 ), up( 0, 1, 0, 0 );	// The eye point an
 
 mat4	orientation, model_view;
 ShapeData cubeData, sphereData, coneData, cylData;				// Structs that hold the Vertex Array Object index and number of vertices of each shape.
-GLuint	texture_cube, texture_earth;
+GLuint	texture_cube, texture_earth, texture_grass, texture_sky;
 GLint   uModelView, uProjection, uView,
 		uAmbient, uDiffuse, uSpecular, uLightPos, uShininess,
 		uTex, uEnableTex;
@@ -32,6 +32,8 @@ void init()
 	GLuint program = LoadShaders( "../my code/vshader.glsl", "../my code/fshader.glsl" );		// Load shaders and use the resulting shader program
     TgaImage coolImage ("../my code/challenge.tga");    
     TgaImage earthImage("../my code/earth.tga");
+    TgaImage grassImage("../my code/grass.tga");
+    TgaImage skyImage  ("../my code/sky.tga");
 #endif
     glUseProgram(program);
 
@@ -59,6 +61,7 @@ void init()
 
     glEnable(GL_DEPTH_TEST);
     
+    //challenge accepted texture
     glGenTextures( 1, &texture_cube );
     glBindTexture( GL_TEXTURE_2D, texture_cube );
     
@@ -70,7 +73,8 @@ void init()
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     
-    
+
+    //earth texture
     glGenTextures( 1, &texture_earth );
     glBindTexture( GL_TEXTURE_2D, texture_earth );
     
@@ -83,8 +87,36 @@ void init()
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     
+
+    //grass texture
+    glGenTextures( 1, &texture_grass );
+    glBindTexture( GL_TEXTURE_2D, texture_grass );
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, grassImage.width, grassImage.height, 0,
+                 (grassImage.byteCount == 3) ? GL_BGR : GL_BGRA,
+                 GL_UNSIGNED_BYTE, grassImage.data );
+    
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+
+    //sky texture
+    glGenTextures( 1, &texture_sky );
+    glBindTexture( GL_TEXTURE_2D, texture_sky );
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, skyImage.width, skyImage.height, 0,
+                 (skyImage.byteCount == 3) ? GL_BGR : GL_BGRA,
+                 GL_UNSIGNED_BYTE, skyImage.data );
+    
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+
+
     glUniform1i( uTex, 0);	// Set texture sampler variable to texture unit 0
-	
 	glEnable(GL_DEPTH_TEST);
 }
 
@@ -264,83 +296,122 @@ void drawAxes(int selected)
 	set_color( colors.top().r, colors.top().g, colors.top().b );
 }
 
+//END PRIMITIVE SHAPES
+
+
+
+
+
 void drawGround(){
 	mvstack.push(model_view);
-    set_color( .0, .8, .0 );
-    model_view *= Translate	(0, -10, 0);									drawAxes(basis_id++);
-    model_view *= Scale		(100, 1, 100);									drawAxes(basis_id++);
-    drawCube(texture_cube);
-	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
-}
-
-void drawShapes()
-{
-	mvstack.push(model_view);
-
-    model_view *= Translate	( 0, 3, 0 );									drawAxes(basis_id++);
-    model_view *= Scale		( 3, 3, 3 );									drawAxes(basis_id++);
-    set_color( .8, .0, .8 );
+    model_view *= Scale(1000, 0.1, 1000);							        drawAxes(basis_id++);
+    set_color(0,1,0);
     drawCube();
-
-    model_view *= Scale		( 1/3.0f, 1/3.0f, 1/3.0f );						drawAxes(basis_id++);
-    model_view *= Translate	( 0, 3, 0 );									drawAxes(basis_id++);
-    set_color( 0, 1, 0 );
-    drawCone();
-
-    model_view *= Translate	( 0, -9, 0 );									drawAxes(basis_id++);
-    set_color( 1, 1, 0 );
-    drawCylinder();
-
 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
-	
-    model_view *= Scale		( 1/3.0f, 1/3.0f, 1/3.0f );						drawAxes(basis_id++);
-
-	drawGround();
 }
 
-void drawPlanets()
-{
-    set_color( .8, .0, .0 );	//model sun
+void drawSky(){
     mvstack.push(model_view);
-    model_view *= Scale(3);													drawAxes(basis_id++);
-    drawSphere(texture_earth);
-    model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
-    
-    set_color( .0, .0, .8 );	//model earth
-    model_view *= RotateY	( 10*TIME );									drawAxes(basis_id++);
-    model_view *= Translate	( 15, 5*sin( 30*DegreesToRadians*TIME ), 0 );	drawAxes(basis_id++);
+    model_view *= Scale(10000, 10000, 10000);                                  drawAxes(basis_id++);
+    set_color(0,0,1);
+    drawCube(texture_sky);
+    model_view = mvstack.top(); mvstack.pop();                              drawAxes(basis_id++);
+}
+
+void drawPlane(){
+    set_color(0.8f,0.8f,0.8f);
     mvstack.push(model_view);
-    model_view *= RotateY( 300*TIME );										drawAxes(basis_id++);
-    drawCube();
-    model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
+        // model_view *= Translate(0,10,0);
+        //draw nose
+        mvstack.push(model_view);
+            model_view *= Scale(3,2,2);
+            model_view *= RotateY(-90);
+            drawCone();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw body
+        mvstack.push(model_view);
+            model_view *= Translate(-8, 0, 0);
+            model_view *= Scale(5,2,2);
+            model_view *= RotateY(-90);
+            drawCylinder();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw wings
+        mvstack.push(model_view);
+            model_view *= Translate(-8,2,0);
+            model_view *= Scale(4, 0.5, 15);
+            drawCube();
+        model_view = mvstack.top(); mvstack.pop();
+    model_view = mvstack.top(); mvstack.pop();
+}
+
+// void drawShapes()
+// {
+// 	mvstack.push(model_view);
+
+//     model_view *= Translate	( 0, 3, 0 );									drawAxes(basis_id++);
+//     model_view *= Scale		( 3, 3, 3 );									drawAxes(basis_id++);
+//     set_color( .8, .0, .8 );
+//     drawCube();
+
+//     model_view *= Scale		( 1/3.0f, 1/3.0f, 1/3.0f );						drawAxes(basis_id++);
+//     model_view *= Translate	( 0, 3, 0 );									drawAxes(basis_id++);
+//     set_color( 0, 1, 0 );
+//     drawCone();
+
+//     model_view *= Translate	( 0, -9, 0 );									drawAxes(basis_id++);
+//     set_color( 1, 1, 0 );
+//     drawCylinder();
+
+// 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
+	
+//     model_view *= Scale		( 1/3.0f, 1/3.0f, 1/3.0f );						drawAxes(basis_id++);
+
+// 	drawGround();
+// }
+
+// void drawPlanets()
+// {
+//     set_color( .8, .0, .0 );	//model sun
+//     mvstack.push(model_view);
+//     model_view *= Scale(3);													drawAxes(basis_id++);
+//     drawSphere(texture_earth);
+//     model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
     
-    set_color( .8, .0, .8 );	//model moon
-    model_view *= RotateY	( 30*TIME );									drawAxes(basis_id++);
-    model_view *= Translate	( 2, 0, 0);										drawAxes(basis_id++);
-    model_view *= Scale(0.2);												drawAxes(basis_id++);
-    drawCylinder();
+//     set_color( .0, .0, .8 );	//model earth
+//     model_view *= RotateY	( 10*TIME );									drawAxes(basis_id++);
+//     model_view *= Translate	( 15, 5*sin( 30*DegreesToRadians*TIME ), 0 );	drawAxes(basis_id++);
+//     mvstack.push(model_view);
+//     model_view *= RotateY( 300*TIME );										drawAxes(basis_id++);
+//     drawCube();;
+//     model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
+    
+//     set_color( .8, .0, .8 );	//model moon
+//     model_view *= RotateY	( 30*TIME );									drawAxes(basis_id++);
+//     model_view *= Translate	( 2, 0, 0);										drawAxes(basis_id++);
+//     model_view *= Scale(0.2);												drawAxes(basis_id++);
+//     drawCylinder();
 	
-}
+// }
 
-void drawMidterm()
-{
-	mvstack.push(model_view);
-	mvstack.push(model_view);
-	model_view *= Translate	( -1, 0, 0 );									drawAxes(basis_id++);
-	model_view *= Scale		( 2, 1, 1 );									drawAxes(basis_id++);
-	drawCube();
-	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
+// void drawMidterm()
+// {
+// 	mvstack.push(model_view);
+// 	mvstack.push(model_view);
+// 	model_view *= Translate	( -1, 0, 0 );									drawAxes(basis_id++);
+// 	model_view *= Scale		( 2, 1, 1 );									drawAxes(basis_id++);
+// 	drawCube();
+// 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 	
-	model_view *= Scale		( 2, 1, 1 );									drawAxes(basis_id++);
-	model_view *= Translate	( 1, 0, 0 );									drawAxes(basis_id++);
-	drawCube();
+// 	model_view *= Scale		( 2, 1, 1 );									drawAxes(basis_id++);
+// 	model_view *= Translate	( 1, 0, 0 );									drawAxes(basis_id++);
+// 	drawCube();
 
 	
-	model_view *= Translate	( 0, 2, 0 );									drawAxes(basis_id++);
-	model_view *= RotateZ	( 90 + 360 * TIME );							drawAxes(basis_id++);
-	drawCube();
-	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
-}
+// 	model_view *= Translate	( 0, 2, 0 );									drawAxes(basis_id++);
+// 	model_view *= RotateZ	( 90 + 360 * TIME );							drawAxes(basis_id++);
+// 	drawCube();
+// 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
+// }
 
 void display(void)
 {
@@ -349,17 +420,17 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
 	
-	model_view = LookAt( eye, ref, up );
+	model_view = LookAt( Translate(8,0,0)*eye, ref, up );
 
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
 
-	drawMidterm();
-    model_view *= Translate( 0, -6, 0 );									drawAxes(basis_id++);	
+    // drawGround();
+    if (TIME < 5){
+        drawSky();
+        drawPlane();
 
-    drawShapes();
-	drawPlanets();
-   
+    }
     glutSwapBuffers();
 }
 

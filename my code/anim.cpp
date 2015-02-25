@@ -435,7 +435,8 @@ void display(void)
         drawSky();
         drawPlane();
         if (TIME < 5)
-            model_view = LookAt(RotateY(72*TIME+45)*Translate(0,0,25)*eye, ref, up );
+            //slightly isometric view
+            model_view = LookAt(RotateY(72*TIME+45)*RotateX(-20)*Translate(0,0,25)*eye, ref, up );
     }
     glutSwapBuffers();
 }

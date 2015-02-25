@@ -509,7 +509,7 @@ void drawDiver( Rotxyz rotateWhole = zr,
             model_view = mvstack.top(); mvstack.pop();
             //move coordinates to new joint basis
             //JOINT //////////////////////////////////////// KNEE KNEE JOINT JOINT
-            model_view *= Translate(0,-0.4,0);
+            model_view *= Translate(0,-0.8,0);
             //draw elbow joint
             mvstack.push(model_view);
                 model_view *= Scale(0.25,0.25,0.25);
@@ -561,7 +561,7 @@ void drawDiver( Rotxyz rotateWhole = zr,
             model_view = mvstack.top(); mvstack.pop();
             //move coordinates to new joint basis
             //JOINT //////////////////////////////////////// KNEE KNEE JOINT JOINT
-            model_view *= Translate(0,-0.4,0);
+            model_view *= Translate(0,-0.8,0);
             //draw elbow joint
             mvstack.push(model_view);
                 model_view *= Scale(0.25,0.25,0.25);
@@ -672,22 +672,44 @@ void display(void)
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
 
-    Rotxyz wb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           lf = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           rf = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           lb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           rb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           lt = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           rt = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           lc = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
-           rc = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand()));
+    //assign for scope
+    static double bTime, 
+                  lfTime,
+                  rfTime,
+                  lbTime,
+                  rbTime,
+                  ltTime,
+                  rtTime,
+                  lcTime,
+                  rcTime;
 
-    // Rotxyz rightForearm = leftForearm;
+    //adjust per scene time
+    if (TIME < 90 * DegreesToRadians)
+        bTime = TIME, 
+       lfTime = 0,
+       rfTime = 0,
+       lbTime = TIME,
+       rbTime = TIME,
+       ltTime = TIME,
+       rtTime = TIME,
+       lcTime = TIME,
+       rcTime = TIME;
+
+    Rotxyz wb = Rotxyz(90*sin(bTime),0,0), 
+           lf = Rotxyz(),
+           rf = Rotxyz(),
+           lb = Rotxyz(0,0,-75+120*sin(lbTime)),
+           rb = Rotxyz(0,0, 75-120*sin(rbTime)),
+           lt = Rotxyz(0,0, 5+15*sin(ltTime)),
+           rt = Rotxyz(0,0,-5-15*sin(rtTime)),
+           lc = Rotxyz( 75*sin(lcTime),0,0),
+           rc = Rotxyz( 75*sin(rcTime),0,0);
+
     drawDiver(wb,           //whole body
-              lf,  //left forearm
+              lf,           //left forearm
               rf,           //right forearm
-              lb,      //left bicep
-              rb,     //right bicep
+              lb,           //left bicep
+              rb,           //right bicep
               lt,           //left thigh
               rt,           //right thigh
               lc,           //left calf

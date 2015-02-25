@@ -350,6 +350,86 @@ void drawPlane(){
     model_view = mvstack.top(); mvstack.pop();
 }
 
+struct Rotxyz{
+    double x,y,z;
+
+    Rotxyz() : x(0), y(0), z(0){}
+    Rotxyz(double xx, double yy, double zz): x(xx), y(yy), z(zz){}
+};
+const Rotxyz zr = Rotxyz();
+
+void drawDiver( Rotxyz rotateWhole = zr,
+                Rotxyz rotateLeftForearm = zr, Rotxyz rotateRightForearm = zr, 
+                Rotxyz rotateLeftBicep   = zr, Rotxyz rotateRightBicep   = zr,
+                Rotxyz rotateLeftThigh   = zr, Rotxyz rotateRightThigh   = zr,
+                Rotxyz rotateLeftCalf    = zr, Rotxyz rotateRightCalf    = zr){
+    model_view *= RotateX(rotateWhole.x) * RotateY(rotateWhole.y) * RotateZ(rotateWhole.z);
+    //center around torso cylinder
+    mvstack.push(model_view);                                                                          
+        model_view *= RotateX(90);
+        model_view *= Scale(0.75,0.75,1.5);
+        set_color(1,0,0);
+        drawCylinder();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw head
+    mvstack.push(model_view);
+        model_view *= Translate(0,1.5+1,0);
+        set_color(1,1,0);
+        drawSphere();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw left arm
+    mvstack.push(model_view);
+        //draw shoulder sphere at top of other cylinder
+        model_view *= Translate(1,1.2,0);
+        mvstack.push(model_view);
+            model_view *= Scale(0.25,0.25,0.25);
+            set_color(1,1,1);
+            drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw left arm
+        mvstack.push(model_view);
+            model_view *= RotateX(rotateLeftBicep.x) * 
+                          RotateY(rotateLeftBicep.y) * 
+                          RotateZ(rotateLeftBicep.z);
+            mvstack.push(model_view);
+                model_view *= Translate(0.3,0,0);
+                model_view *= RotateY(90);
+                model_view *= Scale(0.25,0.25,0.3);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //move coordinates to new joint basis
+            //JOINT //////////////////////////////////////// ELBOW ELBOW JOINT JOINT
+            model_view *= Translate(0.6,0,0);
+            //draw elbow joint
+            mvstack.push(model_view);
+                model_view *= Scale(0.25,0.25,0.25);
+                set_color(1,1,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+            //rotate forearm and its connections
+            model_view *= RotateX(rotateLeftForearm.x) * 
+                          RotateY(rotateLeftForearm.y) * 
+                          RotateZ(rotateLeftForearm.z);
+            //draw forearm
+            mvstack.push(model_view);
+                model_view *= Translate(0.3,0,0);
+                model_view *= RotateY(90);
+                model_view *= Scale(0.25,0.25,0.3);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //draw hand
+            mvstack.push(model_view);
+                model_view *= Translate(0.6+0.4,0,0);
+                model_view *= Scale(0.4,0.4,0.4);
+                set_color(0,0,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+        model_view = mvstack.top(); mvstack.pop();
+    model_view = mvstack.top(); mvstack.pop();
+}
+
 // void drawShapes()
 // {
 
@@ -427,17 +507,20 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
 
+    model_view = LookAt( eye, ref, up );
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
 
-    // drawGround();
-    if (TIME < 8){
-        drawSky();
-        drawPlane();
-        if (TIME < 5)
-            //slightly isometric view
-            model_view = LookAt(RotateY(72*TIME+45)*RotateX(-20)*Translate(0,0,25)*eye, ref, up );
-    }
+    Rotxyz leftArm = Rotxyz(0,30*sin(3*TIME), 30*cos(3*TIME));
+    Rotxyz leftForearm = Rotxyz(0,-15*sin(TIME), -15*cos(TIME));
+    drawDiver(zr,leftForearm,zr,leftArm,zr,zr,zr,zr,zr);
+    // if (TIME > 8){ //change back to 8 later
+    //     // drawSky();
+    //     // drawPlane();
+    //     if (TIME < 5)
+    //         //slightly isometric view
+    //         model_view = LookAt(RotateY(72*TIME+45)*RotateX(-20)*Translate(0,0,25)*eye, ref, up );
+    // }
     glutSwapBuffers();
 }
 

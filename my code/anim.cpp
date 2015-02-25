@@ -1,4 +1,4 @@
-﻿// anim.cpp version 5.0 -- Template code for drawing an articulated figure.  CS 174A.
+// anim.cpp version 5.0 -- Template code for drawing an articulated figure.  CS 174A.
 #include "../CS174a template/Utilities.h"
 #include "../CS174a template/Shapes.h"
 

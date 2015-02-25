@@ -1,6 +1,7 @@
 // anim.cpp version 5.0 -- Template code for drawing an articulated figure.  CS 174A.
 #include "../CS174a template/Utilities.h"
 #include "../CS174a template/Shapes.h"
+#include <cstdlib>
 
 std::stack<mat4> mvstack;
 
@@ -167,11 +168,16 @@ void idleCallBack(void)
 {
     if( !animate ) return;
     else{
+        static int counter = 0;
     	double prev_time = TIME;
+        int last_whole_sec = (int) TIME;
         TIME = TM.GetElapsedTime() ;
-        double fps = 1 / (TIME - prev_time);
     	if( prev_time == 0 ) TM.Reset();
-        if (TIME > 0)   printf("FPS: %f\n", fps);
+        if (TIME - last_whole_sec >= 1){
+            printf("FPS: %d\n", ++counter);
+            counter = 0;
+        }
+        else counter++;
         glutPostRedisplay() ;
     }
 }
@@ -386,7 +392,7 @@ void drawDiver( Rotxyz rotateWhole = zr,
             set_color(1,1,1);
             drawSphere();
         model_view = mvstack.top(); mvstack.pop();
-        //draw left arm
+        //draw left bicep
         mvstack.push(model_view);
             model_view *= RotateX(rotateLeftBicep.x) * 
                           RotateY(rotateLeftBicep.y) * 
@@ -422,6 +428,161 @@ void drawDiver( Rotxyz rotateWhole = zr,
             //draw hand
             mvstack.push(model_view);
                 model_view *= Translate(0.6+0.4,0,0);
+                model_view *= Scale(0.4,0.4,0.4);
+                set_color(0,0,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+        model_view = mvstack.top(); mvstack.pop();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw Right arm
+    mvstack.push(model_view);
+        //draw shoulder sphere at top of other cylinder
+        model_view *= Translate(-1,1.2,0);
+        mvstack.push(model_view);
+            model_view *= Scale(0.25,0.25,0.25);
+            set_color(1,1,1);
+            drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw Right bicep
+        mvstack.push(model_view);
+            model_view *= RotateX(rotateRightBicep.x) * 
+                          RotateY(rotateRightBicep.y) * 
+                          RotateZ(rotateRightBicep.z);
+            mvstack.push(model_view);
+                model_view *= Translate(-0.3,0,0);
+                model_view *= RotateY(90);
+                model_view *= Scale(0.25,0.25,0.3);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //move coordinates to new joint basis
+            //JOINT //////////////////////////////////////// ELBOW ELBOW JOINT JOINT
+            model_view *= Translate(-0.6,0,0);
+            //draw elbow joint
+            mvstack.push(model_view);
+                model_view *= Scale(0.25,0.25,0.25);
+                set_color(1,1,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+            //rotate forearm and its connections
+            model_view *= RotateX(rotateRightForearm.x) * 
+                          RotateY(rotateRightForearm.y) * 
+                          RotateZ(rotateRightForearm.z);
+            //draw forearm
+            mvstack.push(model_view);
+                model_view *= Translate(-0.3,0,0);
+                model_view *= RotateY(90);
+                model_view *= Scale(0.25,0.25,0.3);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //draw hand
+            mvstack.push(model_view);
+                model_view *= Translate(-0.6-0.4,0,0);
+                model_view *= Scale(0.4,0.4,0.4);
+                set_color(0,0,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+        model_view = mvstack.top(); mvstack.pop();
+    model_view = mvstack.top(); mvstack.pop();
+
+    //draw left leg
+    mvstack.push(model_view);
+        //draw pelvis sphere at top of other cylinder
+        model_view *= Translate(0.5,-1.5,0);
+        mvstack.push(model_view);
+            model_view *= Scale(0.25,0.25,0.25);
+            set_color(1,1,1);
+            drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw left Thigh
+        mvstack.push(model_view);
+            model_view *= RotateX(rotateLeftThigh.x) * 
+                          RotateY(rotateLeftThigh.y) * 
+                          RotateZ(rotateLeftThigh.z);
+            mvstack.push(model_view);
+                model_view *= Translate(0,-0.4,0);
+                model_view *= RotateX(90);
+                model_view *= Scale(0.25,0.25,0.4);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //move coordinates to new joint basis
+            //JOINT //////////////////////////////////////// KNEE KNEE JOINT JOINT
+            model_view *= Translate(0,-0.4,0);
+            //draw elbow joint
+            mvstack.push(model_view);
+                model_view *= Scale(0.25,0.25,0.25);
+                set_color(1,1,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+            //rotate Calf and its connections
+            model_view *= RotateX(rotateLeftCalf.x) * 
+                          RotateY(rotateLeftCalf.y) * 
+                          RotateZ(rotateLeftCalf.z);
+            //draw Calf
+            mvstack.push(model_view);
+                model_view *= Translate(0,-0.4,0);
+                model_view *= RotateX(90);
+                model_view *= Scale(0.25,0.25,0.4);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //draw hand
+            mvstack.push(model_view);
+                model_view *= Translate(0,-1,0);
+                model_view *= Scale(0.4,0.4,0.4);
+                set_color(0,0,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+        model_view = mvstack.top(); mvstack.pop();
+    model_view = mvstack.top(); mvstack.pop();
+
+    //draw Right leg
+    mvstack.push(model_view);
+        //draw pelvis sphere at top of other cylinder
+        model_view *= Translate(-0.5,-1.5,0);
+        mvstack.push(model_view);
+            model_view *= Scale(0.25,0.25,0.25);
+            set_color(1,1,1);
+            drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw Right Thigh
+        mvstack.push(model_view);
+            model_view *= RotateX(rotateRightThigh.x) * 
+                          RotateY(rotateRightThigh.y) * 
+                          RotateZ(rotateRightThigh.z);
+            mvstack.push(model_view);
+                model_view *= Translate(0,-0.4,0);
+                model_view *= RotateX(90);
+                model_view *= Scale(0.25,0.25,0.4);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //move coordinates to new joint basis
+            //JOINT //////////////////////////////////////// KNEE KNEE JOINT JOINT
+            model_view *= Translate(0,-0.4,0);
+            //draw elbow joint
+            mvstack.push(model_view);
+                model_view *= Scale(0.25,0.25,0.25);
+                set_color(1,1,1);
+                drawSphere();
+            model_view = mvstack.top(); mvstack.pop();
+            //rotate Calf and its connections
+            model_view *= RotateX(rotateRightCalf.x) * 
+                          RotateY(rotateRightCalf.y) * 
+                          RotateZ(rotateRightCalf.z);
+            //draw Calf
+            mvstack.push(model_view);
+                model_view *= Translate(0,-0.4,0);
+                model_view *= RotateX(90);
+                model_view *= Scale(0.25,0.25,0.4);
+                set_color(1,1,0);
+                drawCylinder();
+            model_view = mvstack.top(); mvstack.pop();
+            //draw hand
+            mvstack.push(model_view);
+                model_view *= Translate(0,-1,0);
                 model_view *= Scale(0.4,0.4,0.4);
                 set_color(0,0,1);
                 drawSphere();
@@ -511,9 +672,26 @@ void display(void)
 	model_view *= orientation;
     model_view *= Scale(zoom);												drawAxes(basis_id++);
 
-    Rotxyz leftArm = Rotxyz(0,30*sin(3*TIME), 30*cos(3*TIME));
-    Rotxyz leftForearm = Rotxyz(0,-15*sin(TIME), -15*cos(TIME));
-    drawDiver(zr,leftForearm,zr,leftArm,zr,zr,zr,zr,zr);
+    Rotxyz wb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           lf = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           rf = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           lb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           rb = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           lt = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           rt = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           lc = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand())),
+           rc = Rotxyz(90*sin(rand()), 90*sin(rand()), 90*sin(rand()));
+
+    // Rotxyz rightForearm = leftForearm;
+    drawDiver(wb,           //whole body
+              lf,  //left forearm
+              rf,           //right forearm
+              lb,      //left bicep
+              rb,     //right bicep
+              lt,           //left thigh
+              rt,           //right thigh
+              lc,           //left calf
+              rc);          //right calf
     // if (TIME > 8){ //change back to 8 later
     //     // drawSky();
     //     // drawPlane();

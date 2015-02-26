@@ -328,31 +328,34 @@ void drawSky(){
     model_view = mvstack.top(); mvstack.pop();                              drawAxes(basis_id++);
 }
 
-void drawPlane(){
+void drawPlane(point3 spawn = point3(0,0,0)){
     set_color(1,1,1);
     //draw body
     mvstack.push(model_view);
-        model_view *= Scale(14,3,2);
-        drawSphere();
-    model_view = mvstack.top(); mvstack.pop();
-    //draw tail
-    mvstack.push(model_view);
-        model_view *= Translate(-13.75,0,0); 
-            mvstack.push(model_view); 
-            model_view *= RotateZ(20);
-            model_view *= Translate(3/sin(20),4/sin(20),0);
-            model_view *= Scale(6,8,0.5);
+        model_view *= Translate(spawn.x,spawn.y,spawn.z);
+        mvstack.push(model_view);
+            model_view *= Scale(14,3,2);
+            drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw tail
+        mvstack.push(model_view);
+            model_view *= Translate(-13.75,0,0); 
+                mvstack.push(model_view); 
+                model_view *= RotateZ(20);
+                model_view *= Translate(3/sin(20),4/sin(20),0);
+                model_view *= Scale(6,8,0.5);
+                drawCube();
+            model_view = mvstack.top(); mvstack.pop();
+            model_view *= Translate(3,3,0);
+            model_view *= Scale(3,0.5,10);
             drawCube();
         model_view = mvstack.top(); mvstack.pop();
-        model_view *= Translate(3,3,0);
-        model_view *= Scale(3,0.5,10);
-        drawCube();
-    model_view = mvstack.top(); mvstack.pop();
-    //draw wings
-    mvstack.push(model_view);
-        model_view *= Translate(3,3,0);
-        model_view *= Scale(6,0.25,25);
-        drawCube();
+        //draw wings
+        mvstack.push(model_view);
+            model_view *= Translate(3,3,0);
+            model_view *= Scale(6,0.25,25);
+            drawCube();
+        model_view = mvstack.top(); mvstack.pop();
     model_view = mvstack.top(); mvstack.pop();
 }
 
@@ -364,11 +367,13 @@ struct Rotxyz{
 };
 const Rotxyz zr = Rotxyz();
 
-void drawDiver( Rotxyz rotateWhole = zr,
+void drawDiver( point3 spawn = point3(0,0,0),
+                Rotxyz rotateWhole = zr,
                 Rotxyz rotateLeftForearm = zr, Rotxyz rotateRightForearm = zr, 
                 Rotxyz rotateLeftBicep   = zr, Rotxyz rotateRightBicep   = zr,
                 Rotxyz rotateLeftThigh   = zr, Rotxyz rotateRightThigh   = zr,
                 Rotxyz rotateLeftCalf    = zr, Rotxyz rotateRightCalf    = zr){
+    model_view *= Translate(spawn.x, spawn.y,spawn.z);
     model_view *= RotateX(rotateWhole.x) * RotateY(rotateWhole.y) * RotateZ(rotateWhole.z);
     //center around torso cylinder
     mvstack.push(model_view);                                                                          
@@ -376,6 +381,13 @@ void drawDiver( Rotxyz rotateWhole = zr,
         model_view *= Scale(0.75,0.75,1.5);
         set_color(1,0,0);
         drawCylinder();
+    model_view = mvstack.top(); mvstack.pop();
+    //draw parachute pack
+    mvstack.push(model_view);
+        model_view *= Translate(0,0,-0.75);
+        model_view *= Scale(2,2,0.4);
+        set_color(0,1,0);
+        drawCube();
     model_view = mvstack.top(); mvstack.pop();
     //draw head
     mvstack.push(model_view);
@@ -436,7 +448,7 @@ void drawDiver( Rotxyz rotateWhole = zr,
     model_view = mvstack.top(); mvstack.pop();
     //draw Right arm
     mvstack.push(model_view);
-        //draw shoulder sphere at top of other cylinder
+        //draw shoulder sphere at top of other 
         model_view *= Translate(-1,1.2,0);
         mvstack.push(model_view);
             model_view *= Scale(0.25,0.25,0.25);
@@ -661,6 +673,10 @@ void drawDiver( Rotxyz rotateWhole = zr,
 // 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 // }
 
+const double scenePlaneTime     = 8,
+             sceneJumpSpawnTime = scenePlaneTime + 3,
+             sceneJumpTime      = 10+scenePlaneTime;
+
 void display(void)
 {
 	basis_id = 0;
@@ -668,9 +684,9 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
 
-    model_view = LookAt( eye, ref, up );
-	model_view *= orientation;
-    model_view *= Scale(zoom);												drawAxes(basis_id++);
+ //    model_view = LookAt( eye, ref, up );
+	// model_view *= orientation;
+ //    model_view *= Scale(zoom);												drawAxes(basis_id++);
 
     //assign for scope
     static double bTime, 
@@ -683,44 +699,60 @@ void display(void)
                   lcTime,
                   rcTime;
 
-    //adjust per scene time
-    if (TIME < 90 * DegreesToRadians)
-        bTime = TIME, 
-       lfTime = 0,
-       rfTime = 0,
-       lbTime = TIME,
-       rbTime = TIME,
-       ltTime = TIME,
-       rtTime = TIME,
-       lcTime = TIME,
-       rcTime = TIME;
+    if (TIME < scenePlaneTime){ //change back to 8 later
+        if (TIME < 5){
+            //slightly isometric view
+            eye = RotateY(72*TIME+45) * RotateX(-20) * Translate(0,0,40) * ref;
+            model_view = LookAt( eye, ref, up );
+        }
+        // drawSky();
+        drawPlane();
+    }
+    else if (TIME < sceneJumpTime){
+        model_view = LookAt(Translate(0,0,3*TIME)*eye, ref, up );
+        model_view *= orientation;
+        static double pTime;
+        static Rotxyz wb, lf, rf,
+                      lb, rb, lt,
+                      rt, lc, rc;
 
-    Rotxyz wb = Rotxyz(90*sin(bTime),0,0), 
-           lf = Rotxyz(),
-           rf = Rotxyz(),
-           lb = Rotxyz(0,0,-75+120*sin(lbTime)),
-           rb = Rotxyz(0,0, 75-120*sin(rbTime)),
-           lt = Rotxyz(0,0, 5+15*sin(ltTime)),
-           rt = Rotxyz(0,0,-5-15*sin(rtTime)),
-           lc = Rotxyz( 75*sin(lcTime),0,0),
-           rc = Rotxyz( 75*sin(rcTime),0,0);
+        //in 6 seconds move 300 units: 50m/s
+        drawPlane(point3(50*(TIME - scenePlaneTime)-150,0,0));
+            //set up variables for diver
+        if (TIME > sceneJumpSpawnTime){
+            if (TIME - sceneJumpSpawnTime < 90 * DegreesToRadians) {
+                bTime = TIME-sceneJumpSpawnTime, 
+                lfTime = 0,
+                rfTime = 0,
+                lbTime = TIME-sceneJumpSpawnTime,
+                rbTime = TIME-sceneJumpSpawnTime,
+                ltTime = TIME-sceneJumpSpawnTime,
+                rtTime = TIME-sceneJumpSpawnTime,
+                lcTime = TIME-sceneJumpSpawnTime,
+                rcTime = TIME-sceneJumpSpawnTime;
 
-    drawDiver(wb,           //whole body
-              lf,           //left forearm
-              rf,           //right forearm
-              lb,           //left bicep
-              rb,           //right bicep
-              lt,           //left thigh
-              rt,           //right thigh
-              lc,           //left calf
-              rc);          //right calf
-    // if (TIME > 8){ //change back to 8 later
-    //     // drawSky();
-    //     // drawPlane();
-    //     if (TIME < 5)
-    //         //slightly isometric view
-    //         model_view = LookAt(RotateY(72*TIME+45)*RotateX(-20)*Translate(0,0,25)*eye, ref, up );
-    // }
+                wb = Rotxyz(90*sin(bTime),0,0), 
+                lf = Rotxyz(),
+                rf = Rotxyz(),
+                lb = Rotxyz(0,0,-75+120*sin(lbTime)),
+                rb = Rotxyz(0,0, 75-120*sin(rbTime)),
+                lt = Rotxyz(0,0, 5+15*sin(ltTime)),
+                rt = Rotxyz(0,0,-5-15*sin(rtTime)),
+                lc = Rotxyz( 75*sin(lcTime),0,0),
+                rc = Rotxyz( 75*sin(rcTime),0,0);
+            }
+            drawDiver(point3(0,-15*(TIME-sceneJumpSpawnTime)*(TIME-sceneJumpSpawnTime),3+TIME-sceneJumpSpawnTime), //spawn point
+                  wb,           //whole body
+                  lf,           //left forearm
+                  rf,           //right forearm
+                  lb,           //left bicep
+                  rb,           //right bicep
+                  lt,           //left thigh
+                  rt,           //right thigh
+                  lc,           //left calf
+                  rc);          //right calf}
+        }
+    }
     glutSwapBuffers();
 }
 

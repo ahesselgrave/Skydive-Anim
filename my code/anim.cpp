@@ -28,6 +28,8 @@ void init()
     GLuint program = LoadShaders( "vshader.glsl", "fshader.glsl" );								// Load shaders and use the resulting shader program
     TgaImage coolImage ("challenge.tga");    
     TgaImage earthImage("earth.tga");
+    TgaImage grassImage("../my code/grass.tga");
+    TgaImage skyImage  ("../my code/sky.tga");
 
 #else
 	GLuint program = LoadShaders( "../my code/vshader.glsl", "../my code/fshader.glsl" );		// Load shaders and use the resulting shader program
@@ -104,21 +106,21 @@ void init()
     
 
     //sky texture
-    glGenTextures( 1, &texture_sky );
-    glBindTexture( GL_TEXTURE_2D, texture_sky );
+ //    glGenTextures( 1, &texture_sky );
+ //    glBindTexture( GL_TEXTURE_2D, texture_sky );
     
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, skyImage.width, skyImage.height, 0,
-                 (skyImage.byteCount == 3) ? GL_BGR : GL_BGRA,
-                 GL_UNSIGNED_BYTE, skyImage.data );
+ //    glTexImage2D(GL_TEXTURE_2D, 0, 4, skyImage.width, skyImage.height, 0,
+ //                 (skyImage.byteCount == 3) ? GL_BGR : GL_BGRA,
+ //                 GL_UNSIGNED_BYTE, skyImage.data );
     
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+ //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+ //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+ //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+ //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 
-    glUniform1i( uTex, 0);	// Set texture sampler variable to texture unit 0
-	glEnable(GL_DEPTH_TEST);
+ //    glUniform1i( uTex, 0);	// Set texture sampler variable to texture unit 0
+	// glEnable(GL_DEPTH_TEST);
 }
 
 struct color{ color( float r, float g, float b) : r(r), g(g), b(b) {} float r, g, b;};
@@ -312,19 +314,19 @@ void drawAxes(int selected)
 
 
 
-void drawGround(){
+void drawGround(point3 spawn = point3(0,0,0)){
 	mvstack.push(model_view);
-    model_view *= Scale(1000, 0.1, 1000);							        drawAxes(basis_id++);
+    model_view *= Translate(spawn.x, spawn.y, spawn.z);
+    model_view *= Scale(10000, 0.1, 10000);							        drawAxes(basis_id++);
     set_color(0,1,0);
-    drawCube();
+    drawCube(texture_grass);
 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 }
 
-void drawSky(){
+void drawSky(GLuint texture = texture_cube){
     mvstack.push(model_view);
     model_view *= Scale(10000, 10000, 10000);                                  drawAxes(basis_id++);
-    set_color(0,0,1);
-    drawCube(texture_sky);
+    // drawSkybox(texture);
     model_view = mvstack.top(); mvstack.pop();                              drawAxes(basis_id++);
 }
 
@@ -685,9 +687,9 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	set_color( .6, .6, .6 );
 
- //    model_view = LookAt( eye, ref, up );
-	// model_view *= orientation;
- //    model_view *= Scale(zoom);												drawAxes(basis_id++);
+    model_view = LookAt( eye, ref, up );
+	model_view *= orientation;
+    model_view *= Scale(zoom);												drawAxes(basis_id++);
 
     //assign for scope
     static double bTime, 
@@ -711,11 +713,13 @@ void display(void)
             model_view = LookAt( eye, ref, up );
         }
         // drawSky();
+        drawGround(point3(0,-100,0));
         drawPlane();
     }
     else if (TIME < sceneJumpTime){
         model_view = LookAt(Translate(0,0,40)*eye, ref, up );
         model_view *= orientation;
+        drawGround(point3(0,-100,0));
 
 
         //in 6 seconds move 300 units: 50m/s

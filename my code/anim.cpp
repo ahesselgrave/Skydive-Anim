@@ -675,7 +675,8 @@ void drawDiver( point3 spawn = point3(0,0,0),
 
 const double scenePlaneTime     = 8,
              sceneJumpSpawnTime = scenePlaneTime + 3,
-             sceneJumpTime      = 10+scenePlaneTime;
+             sceneJumpTime      = 7+scenePlaneTime,
+             sceneAirTime       = 10 + sceneJumpTime;
 
 void display(void)
 {
@@ -697,7 +698,11 @@ void display(void)
                   ltTime,
                   rtTime,
                   lcTime,
-                  rcTime;
+                  rcTime,
+                  pTime;
+    static Rotxyz wb, lf, rf,
+                  lb, rb, lt,
+                  rt, lc, rc;
 
     if (TIME < scenePlaneTime){ //change back to 8 later
         if (TIME < 5){
@@ -709,12 +714,9 @@ void display(void)
         drawPlane();
     }
     else if (TIME < sceneJumpTime){
-        model_view = LookAt(Translate(0,0,3*TIME)*eye, ref, up );
+        model_view = LookAt(Translate(0,0,40)*eye, ref, up );
         model_view *= orientation;
-        static double pTime;
-        static Rotxyz wb, lf, rf,
-                      lb, rb, lt,
-                      rt, lc, rc;
+
 
         //in 6 seconds move 300 units: 50m/s
         drawPlane(point3(50*(TIME - scenePlaneTime)-150,0,0));
@@ -741,7 +743,8 @@ void display(void)
                 lc = Rotxyz( 75*sin(lcTime),0,0),
                 rc = Rotxyz( 75*sin(rcTime),0,0);
             }
-            drawDiver(point3(0,-15*(TIME-sceneJumpSpawnTime)*(TIME-sceneJumpSpawnTime),3+TIME-sceneJumpSpawnTime), //spawn point
+
+            drawDiver(point3(25*(TIME - sceneJumpSpawnTime),-15*(TIME-sceneJumpSpawnTime)*(TIME-sceneJumpSpawnTime),3+TIME-sceneJumpSpawnTime), //spawn point
                   wb,           //whole body
                   lf,           //left forearm
                   rf,           //right forearm
@@ -752,6 +755,11 @@ void display(void)
                   lc,           //left calf
                   rc);          //right calf}
         }
+    }
+    else if (TIME < sceneAirTime){
+        eye = ref;
+        model_view = LookAt(RotateY(20)*RotateX(20) * Translate(0,0,30)*eye, ref, up);
+        drawDiver(point3(0,0,0), wb ,lf, rf, lb, rb ,lt, rt, lc, rc);
     }
     glutSwapBuffers();
 }

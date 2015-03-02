@@ -9,34 +9,92 @@ void generateSphere(GLuint program, ShapeData* sphereData);
 void generateCone(GLuint program, ShapeData* coneData);
 void generateCylinder(GLuint program, ShapeData* cylData);
 void generatePropellor(GLuint program, ShapeData* propData);
-void generateSky(GLuint program, ShapeData* propData);
+void generateSky(GLuint program, ShapeData* skyData);
+void generateSkySphere(GLuint program, ShapeData* skySphereData);
 
 //----------------------------------------------------------------------------
 // Propellor
-const int numPropVertices = 20;
+const int numPropVertices = 60; //(20 faces)(1 tri/face)(3 vertices/triangle)
 point4 propPoints [numPropVertices];
 point3 propNormals[numPropVertices];
 
 point4 propVertices[12] = {
     //centered cube vertices
-    point4( -0.5, -0.5,  0.5, 1 ), //front bottom left
-    point4( -0.5,  0.5,  0.5, 1 ), //front top left
-    point4(  0.5,  0.5,  0.5, 1 ), //front top right
-    point4(  0.5, -0.5,  0.5, 1 ), //front bottom right
-    point4( -0.5, -0.5, -0.5, 1 ), //back bottom left
-    point4( -0.5,  0.5, -0.5, 1 ), //back top left
-    point4(  0.5,  0.5, -0.5, 1 ), //back top right
-    point4(  0.5, -0.5, -0.5, 1 ), //back bottom right
+    point4( -0.5, -0.5,  0.5, 1 ), //front bottom left      0
+    point4( -0.5,  0.5,  0.5, 1 ), //front top left         1
+    point4(  0.5,  0.5,  0.5, 1 ), //front top right        2
+    point4(  0.5, -0.5,  0.5, 1 ), //front bottom right     3
+    point4( -0.5, -0.5, -0.5, 1 ), //back bottom left       4
+    point4( -0.5,  0.5, -0.5, 1 ), //back top left          5
+    point4(  0.5,  0.5, -0.5, 1 ), //back top right         6
+    point4(  0.5, -0.5, -0.5, 1 ), //back bottom right      7
     //propellor pyramid points
-    point4(    0,  4.5,    0, 1 ), //top point
-    point4(  4.5,    0,    0, 1 ), //right point
-    point4(    0, -4.5,    0, 1 ), //bottom point
-    point4( -4.5,    0,    0, 1 ), //left point
+    point4(    0,  4.5,    0, 1 ), //top point              8
+    point4(  4.5,    0,    0, 1 ), //right point            9
+    point4(    0, -4.5,    0, 1 ), //bottom point          10
+    point4( -4.5,    0,    0, 1 ), //left point            11
 };
+int propIndex = 0;
+//generate triangular face and its normal
+void proptri(int a, int b, int c){
+    point3 p1 = point3(propVertices[a].x, propVertices[a].y, propVertices[a].z),
+           p2 = point3(propVertices[b].x, propVertices[b].y, propVertices[b].z),
+           p3 = point3(propVertices[c].x, propVertices[c].y, propVertices[c].z);
+    point3 n = cross(p2-p1, p3-p1);
+    propPoints[propIndex] = propVertices[a]; propNormals[propIndex] = n; propIndex++;
+    propPoints[propIndex] = propVertices[b]; propNormals[propIndex] = n; propIndex++;
+    propPoints[propIndex] = propVertices[c]; propNormals[propIndex] = n; propIndex++;
+}
 
-void genPropTriangles(){
-    //draw faces for everything
+void colorprop() {
+    //top blade
+    proptri(1,2,8);
+    proptri(2,6,8);
+    proptri(6,5,8);
+    proptri(5,1,8);
 
+    //right blade
+    proptri(6,2,9);
+    proptri(2,3,9);
+    proptri(3,7,9);
+    proptri(7,6,9);
+
+    //bottom blade
+    proptri(3,0,10);
+    proptri(7,3,10);
+    proptri(4,7,10);
+    proptri(0,4,10);
+
+    //left blade
+    proptri(0,1,11);
+    proptri(1,5,11);
+    proptri(5,4,11);
+    proptri(4,0,11);
+
+    //front square face
+    proptri(0,3,1);
+    proptri(2,1,3);
+
+    //back square face
+    proptri(4,5,7);
+    proptri(6,7,5);
+}
+
+// initialization
+void generatePropellor(GLuint program, ShapeData* propData)
+{
+    colorprop();
+    propData->numVertices = numPropVertices;
+
+    // Create a vertex array object
+    glGenVertexArrays( 1, &propData->vao );
+    glBindVertexArray( propData->vao );
+
+    // Set vertex attributes
+    setVertexAttrib(program, 
+        (float*)propPoints,  sizeof(propPoints), 
+        (float*)propNormals, sizeof(propNormals),
+         0,    0);
 }
 
 //----------------------------------------------------------------------------
@@ -280,6 +338,27 @@ void generateSphere(GLuint program, ShapeData* sphereData)
         (float*)sphereUVs, sizeof(sphereUVs));
 }
 
+//Sky Sphere
+point4 skySpherePoints [numSphereVertices];
+point3 skySphereNormals[numSphereVertices];
+point2 skySphereUVs[numSphereVertices];
+
+void generateSkySphere(GLuint program, ShapeData* skySphereData){
+    for (int i = 0; i < numSphereVertices; i++){
+        skyNormals[i] = sphereNormals[i] * -1; //invert sphere normals for inwards stuff;
+        skySpherePoints[i] = spherePoints[i];
+        skySphereUVs[i] = sphereUVs[i];
+    }
+
+    glGenVertexArrays( 1, &skySphereData->vao );
+    glBindVertexArray( skySphereData->vao );
+
+    // Set vertex attributes
+    setVertexAttrib(program,
+        (float*)skySpherePoints,  sizeof(skySpherePoints),
+        (float*)skySphereNormals, sizeof(skySphereNormals),
+        (float*)skySphereUVs, sizeof(skySphereUVs));
+}
 //----------------------------------------------------------------------------
 // Cone
 

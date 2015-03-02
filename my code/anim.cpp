@@ -16,7 +16,7 @@ const unsigned X = 0, Y = 1, Z = 2;
 vec4 eye( 0, 0, 15, 1), ref( 0, 0, 0, 1 ), up( 0, 1, 0, 0 );	// The eye point and look-at point.
 
 mat4	orientation, model_view;
-ShapeData cubeData, sphereData, coneData, cylData, skyData;				// Structs that hold the Vertex Array Object index and number of vertices of each shape.
+ShapeData cubeData, sphereData, coneData, cylData, skyData, propData, skySphereData;				// Structs that hold the Vertex Array Object index and number of vertices of each shape.
 GLuint	texture_cube, texture_earth, texture_grass, texture_sky;
 GLint   uModelView, uProjection, uView,
 		uAmbient, uDiffuse, uSpecular, uLightPos, uShininess,
@@ -45,6 +45,8 @@ void init()
     generateCone(program, &coneData);
     generateCylinder(program, &cylData);
     generateSky(program, &skyData);
+    generatePropellor(program, &propData);
+    generateSkySphere(program, &skySphereData);
 
     uModelView  = glGetUniformLocation( program, "ModelView"  );
     uProjection = glGetUniformLocation( program, "Projection" );
@@ -220,6 +222,11 @@ void drawCone(GLuint texture)
     glUniform1i( uEnableTex, 0);
 }
 
+void drawPropellor(){
+    glUniformMatrix4fv( uModelView, 1, GL_TRUE, model_view );
+    glBindVertexArray( propData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, propData.numVertices );
+}
 //Cube
 void drawCube()
 {
@@ -263,6 +270,7 @@ void drawSphere()
     glBindVertexArray( sphereData.vao );
     glDrawArrays( GL_TRIANGLES, 0, sphereData.numVertices );
 }
+
 void drawSphere(GLuint texture)	// draw a sphere with radius 1 centered around the origin.
 {
 	glBindTexture( GL_TEXTURE_2D, texture);
@@ -270,6 +278,16 @@ void drawSphere(GLuint texture)	// draw a sphere with radius 1 centered around t
     glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
     glBindVertexArray( sphereData.vao );
     glDrawArrays( GL_TRIANGLES, 0, sphereData.numVertices );
+    glUniform1i( uEnableTex, 0 );
+}
+
+void drawSkySphere(GLuint texture) // draw a sphere with radius 1 centered around the origin.
+{
+    glBindTexture( GL_TEXTURE_2D, texture);
+    glUniform1i( uEnableTex, 1);
+    glUniformMatrix4fv( uModelView, 1, GL_FALSE, transpose(model_view) );
+    glBindVertexArray( skySphereData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, skySphereData.numVertices );
     glUniform1i( uEnableTex, 0 );
 }
 
@@ -336,8 +354,7 @@ void drawAxes(int selected)
 void drawGround(point3 spawn = point3(0,0,0)){
 	mvstack.push(model_view);
     model_view *= Translate(spawn.x, spawn.y, spawn.z);
-    model_view *= Scale(10000, 0.1, 10000);							        drawAxes(basis_id++);
-    set_color(0,1,0);
+    model_view *= Scale(2000, 0.1, 2000);							        drawAxes(basis_id++);
     drawCube(texture_grass);
 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 }
@@ -352,13 +369,21 @@ void drawSkybox(point3 scale = point3(1,1,1), point3 spawn = point3(0,0,0), GLui
 }
 
 void drawPlane(point3 spawn = point3(0,0,0)){
-    set_color(1,1,1);
     //draw body
     mvstack.push(model_view);
         model_view *= Translate(spawn.x,spawn.y,spawn.z);
         mvstack.push(model_view);
             model_view *= Scale(14,3,2);
+            set_color(0.5,0.5,0.5);
             drawSphere();
+        model_view = mvstack.top(); mvstack.pop();
+        //draw propellor
+        mvstack.push(model_view);
+            model_view *= Translate(14,0,0);
+            model_view *= RotateY(90);
+            model_view *= RotateZ(900*TIME);
+            set_color(1,1,1);
+            drawPropellor();
         model_view = mvstack.top(); mvstack.pop();
         //draw tail
         mvstack.push(model_view);
@@ -367,6 +392,7 @@ void drawPlane(point3 spawn = point3(0,0,0)){
                 model_view *= RotateZ(20);
                 model_view *= Translate(3/sin(20),4/sin(20),0);
                 model_view *= Scale(6,8,0.5);
+                set_color(0.5,0.5, 0.5);
                 drawCube();
             model_view = mvstack.top(); mvstack.pop();
             model_view *= Translate(3,3,0);
@@ -763,7 +789,7 @@ void display(void)
     else if (TIME < sceneJumpTime){
         model_view = LookAt(Translate(0,0,40)*eye, ref, up );
         model_view *= orientation;
-        drawSkybox(point3(1000,1000,1000));
+        drawSkybox(point3(2000,2000,2000));
         drawGround(point3(0,-500,0));
 
         //in 6 seconds move 300 units: 50m/s

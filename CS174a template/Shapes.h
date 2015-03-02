@@ -9,6 +9,7 @@ void generateSphere(GLuint program, ShapeData* sphereData);
 void generateCone(GLuint program, ShapeData* coneData);
 void generateCylinder(GLuint program, ShapeData* cylData);
 void generatePropellor(GLuint program, ShapeData* propData);
+void generateSky(GLuint program, ShapeData* propData);
 
 //----------------------------------------------------------------------------
 // Propellor
@@ -107,6 +108,74 @@ void generateCube(GLuint program, ShapeData* cubeData)
         (float*)cubeUV,      sizeof(cubeUV));
 }
 
+//----------------------------------------------------------------------------
+// Sky
+
+const int numSkyVertices = 36; //(6 faces)(2 triangles/face)(3 vertices/triangle)
+
+point4 skyPoints [numSkyVertices];
+point3 skyNormals[numSkyVertices];
+point2 skyUV     [numSkyVertices];
+
+// Vertices of a unit sky centered at origin, sides aligned with axes
+point4 sky_vertices[8] = {
+    point4( -0.5, -0.5,  0.5, 1 ),
+    point4( -0.5,  0.5,  0.5, 1 ),
+    point4(  0.5,  0.5,  0.5, 1 ),
+    point4(  0.5, -0.5,  0.5, 1 ),
+    point4( -0.5, -0.5, -0.5, 1 ),
+    point4( -0.5,  0.5, -0.5, 1 ),
+    point4(  0.5,  0.5, -0.5, 1 ),
+    point4(  0.5, -0.5, -0.5, 1 )
+};
+
+// quad generates two triangles for each face and assigns normals and texture coordinates
+//    to the sky_vertices
+int skyIndex = 0;
+void skyquad( int a, int b, int c, int d, const point3& normal )
+{
+    //this is flat shading; set all normals to the same one
+    skyPoints[skyIndex] = sky_vertices[a]; skyNormals[skyIndex] = normal; 
+    skyUV[skyIndex] = point2(0, 1); skyIndex++;
+    skyPoints[skyIndex] = sky_vertices[b]; skyNormals[skyIndex] = normal;
+    skyUV[skyIndex] = point2(0, 0); skyIndex++;
+    skyPoints[skyIndex] = sky_vertices[c]; skyNormals[skyIndex] = normal;
+    skyUV[skyIndex] = point2(1, 0); skyIndex++;
+    skyPoints[skyIndex] = sky_vertices[a]; skyNormals[skyIndex] = normal;
+    skyUV[skyIndex] = point2(0, 1); skyIndex++;
+    skyPoints[skyIndex] = sky_vertices[c]; skyNormals[skyIndex] = normal;
+    skyUV[skyIndex] = point2(1, 0); skyIndex++;
+    skyPoints[skyIndex] = sky_vertices[d]; skyNormals[skyIndex] = normal;
+    skyUV[skyIndex] = point2(1, 1); skyIndex++;
+}
+
+// generate 12 triangles: 36 sky_vertices, 36 normals, 36 texture coordinates
+void colorsky()
+{
+    skyquad( 1, 0, 3, 2, point3( 0,  0,  -1) );
+    skyquad( 2, 3, 7, 6, point3(-1,  0,  0) );
+    skyquad( 3, 0, 4, 7, point3( 0,  1,  0) );
+    skyquad( 6, 5, 1, 2, point3( 0, -1,  0) );
+    skyquad( 4, 5, 6, 7, point3( 0,  0,  1) );
+    skyquad( 5, 4, 0, 1, point3( 1,  0,  0) );
+}
+
+// initialization
+void generateSky(GLuint program, ShapeData* skyData)
+{
+    colorsky();
+    skyData->numVertices = numSkyVertices;
+
+    // Create a vertex array object
+    glGenVertexArrays( 1, &skyData->vao );
+    glBindVertexArray( skyData->vao );
+
+    // Set vertex attributes
+    setVertexAttrib(program, 
+        (float*)skyPoints,  sizeof(skyPoints), 
+        (float*)skyNormals, sizeof(skyNormals),
+        (float*)skyUV,      sizeof(skyUV));
+}
 
 //----------------------------------------------------------------------------
 // Sphere approximation by recursive subdivision of a tetrahedron

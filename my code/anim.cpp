@@ -16,7 +16,7 @@ const unsigned X = 0, Y = 1, Z = 2;
 vec4 eye( 0, 0, 15, 1), ref( 0, 0, 0, 1 ), up( 0, 1, 0, 0 );	// The eye point and look-at point.
 
 mat4	orientation, model_view;
-ShapeData cubeData, sphereData, coneData, cylData;				// Structs that hold the Vertex Array Object index and number of vertices of each shape.
+ShapeData cubeData, sphereData, coneData, cylData, skyData;				// Structs that hold the Vertex Array Object index and number of vertices of each shape.
 GLuint	texture_cube, texture_earth, texture_grass, texture_sky;
 GLint   uModelView, uProjection, uView,
 		uAmbient, uDiffuse, uSpecular, uLightPos, uShininess,
@@ -44,6 +44,7 @@ void init()
     generateSphere(program, &sphereData);
     generateCone(program, &coneData);
     generateCylinder(program, &cylData);
+    generateSky(program, &skyData);
 
     uModelView  = glGetUniformLocation( program, "ModelView"  );
     uProjection = glGetUniformLocation( program, "Projection" );
@@ -105,22 +106,22 @@ void init()
     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     
 
-    //sky texture
- //    glGenTextures( 1, &texture_sky );
- //    glBindTexture( GL_TEXTURE_2D, texture_sky );
+    // sky texture
+    glGenTextures( 1, &texture_sky );
+    glBindTexture( GL_TEXTURE_2D, texture_sky );
     
- //    glTexImage2D(GL_TEXTURE_2D, 0, 4, skyImage.width, skyImage.height, 0,
- //                 (skyImage.byteCount == 3) ? GL_BGR : GL_BGRA,
- //                 GL_UNSIGNED_BYTE, skyImage.data );
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, skyImage.width, skyImage.height, 0,
+                 (skyImage.byteCount == 3) ? GL_BGR : GL_BGRA,
+                 GL_UNSIGNED_BYTE, skyImage.data );
     
- //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
- //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
- //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
- //    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
 
- //    glUniform1i( uTex, 0);	// Set texture sampler variable to texture unit 0
-	// glEnable(GL_DEPTH_TEST);
+    glUniform1i( uTex, 0);	// Set texture sampler variable to texture unit 0
+	glEnable(GL_DEPTH_TEST);
 }
 
 struct color{ color( float r, float g, float b) : r(r), g(g), b(b) {} float r, g, b;};
@@ -237,6 +238,24 @@ void drawCube(GLuint texture)
     glUniform1i( uEnableTex, 0 );
 }
 
+//Sky
+void drawSky()
+{
+    glUniformMatrix4fv( uModelView, 1, GL_TRUE, model_view );
+    glBindVertexArray( skyData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, skyData.numVertices );
+}
+
+void drawSky(GLuint texture)
+{
+    glBindTexture( GL_TEXTURE_2D, texture );
+    glUniform1i( uEnableTex, 1 );
+    glUniformMatrix4fv( uModelView, 1, GL_TRUE, model_view );
+    glBindVertexArray( skyData.vao );
+    glDrawArrays( GL_TRIANGLES, 0, skyData.numVertices );
+    glUniform1i( uEnableTex, 0 );
+}
+
 //Sphere
 void drawSphere()
 {
@@ -323,10 +342,12 @@ void drawGround(point3 spawn = point3(0,0,0)){
 	model_view = mvstack.top(); mvstack.pop();								drawAxes(basis_id++);
 }
 
-void drawSky(GLuint texture = texture_cube){
+void drawSkybox(point3 scale = point3(1,1,1), point3 spawn = point3(0,0,0), GLuint texture = texture_sky){
     mvstack.push(model_view);
-    model_view *= Scale(10000, 10000, 10000);                                  drawAxes(basis_id++);
-    // drawSkybox(texture);
+        model_view *= Translate(spawn.x,spawn.y,spawn.z);
+        model_view *= Scale(scale.x,scale.y,scale.z);                           drawAxes(basis_id++);
+        set_color(1,1,1);
+        drawSky(texture);
     model_view = mvstack.top(); mvstack.pop();                              drawAxes(basis_id++);
 }
 
@@ -361,6 +382,22 @@ void drawPlane(point3 spawn = point3(0,0,0)){
     model_view = mvstack.top(); mvstack.pop();
 }
 
+
+void drawParachute() {
+    mvstack.push(model_view);
+        model_view *= Translate(0,15,0);
+        model_view *= Scale(10,3,10);
+        set_color(1,0,1);
+        drawCube();
+    model_view = mvstack.top(); mvstack.pop();
+    mvstack.push(model_view);
+        model_view *= Translate(0,7.5,-0.75);
+        model_view *= Scale(0.1,15,0.1);
+        set_color(0,0,0);
+        drawCube();
+    model_view = mvstack.top(); mvstack.pop();
+}
+
 struct Rotxyz{
     double x,y,z;
 
@@ -374,7 +411,9 @@ void drawDiver( point3 spawn = point3(0,0,0),
                 Rotxyz rotateLeftForearm = zr, Rotxyz rotateRightForearm = zr, 
                 Rotxyz rotateLeftBicep   = zr, Rotxyz rotateRightBicep   = zr,
                 Rotxyz rotateLeftThigh   = zr, Rotxyz rotateRightThigh   = zr,
-                Rotxyz rotateLeftCalf    = zr, Rotxyz rotateRightCalf    = zr){
+                Rotxyz rotateLeftCalf    = zr, Rotxyz rotateRightCalf    = zr,
+                bool drawPar= false){
+
     model_view *= Translate(spawn.x, spawn.y,spawn.z);
     model_view *= RotateX(rotateWhole.x) * RotateY(rotateWhole.y) * RotateZ(rotateWhole.z);
     //center around torso cylinder
@@ -386,6 +425,7 @@ void drawDiver( point3 spawn = point3(0,0,0),
     model_view = mvstack.top(); mvstack.pop();
     //draw parachute pack
     mvstack.push(model_view);
+        if (drawPar) drawParachute();
         model_view *= Translate(0,0,-0.75);
         model_view *= Scale(2,2,0.4);
         set_color(0,1,0);
@@ -678,7 +718,10 @@ void drawDiver( point3 spawn = point3(0,0,0),
 const double scenePlaneTime     = 8,
              sceneJumpSpawnTime = scenePlaneTime + 3,
              sceneJumpTime      = 7+scenePlaneTime,
-             sceneAirTime       = 10 + sceneJumpTime;
+             sceneAirTime       = 10 + sceneJumpTime,
+             scenePullTime      = 3 + sceneJumpTime,
+             sceneParachuteTime = 2 + scenePullTime,
+             sceneVerticalTime  = 1 + sceneParachuteTime;
 
 void display(void)
 {
@@ -706,21 +749,22 @@ void display(void)
                   lb, rb, lt,
                   rt, lc, rc;
 
+
     if (TIME < scenePlaneTime){ //change back to 8 later
         if (TIME < 5){
-            //slightly isometric view
             eye = RotateY(72*TIME+45) * RotateX(-20) * Translate(0,0,40) * ref;
             model_view = LookAt( eye, ref, up );
+            model_view *= orientation;
         }
-        // drawSky();
-        drawGround(point3(0,-100,0));
         drawPlane();
+        drawSkybox(point3(1000,1000,1000), point3(-50*TIME,0,0));
+        drawGround(point3(-50*TIME,-500,0));
     }
     else if (TIME < sceneJumpTime){
         model_view = LookAt(Translate(0,0,40)*eye, ref, up );
         model_view *= orientation;
-        drawGround(point3(0,-100,0));
-
+        drawSkybox(point3(1000,1000,1000));
+        drawGround(point3(0,-500,0));
 
         //in 6 seconds move 300 units: 50m/s
         drawPlane(point3(50*(TIME - scenePlaneTime)-150,0,0));
@@ -746,6 +790,8 @@ void display(void)
                 rt = Rotxyz(0,0,-5-15*sin(rtTime)),
                 lc = Rotxyz( 75*sin(lcTime),0,0),
                 rc = Rotxyz( 75*sin(rcTime),0,0);
+
+
             }
 
             drawDiver(point3(25*(TIME - sceneJumpSpawnTime),-15*(TIME-sceneJumpSpawnTime)*(TIME-sceneJumpSpawnTime),3+TIME-sceneJumpSpawnTime), //spawn point
@@ -761,9 +807,59 @@ void display(void)
         }
     }
     else if (TIME < sceneAirTime){
-        eye = ref;
-        model_view = LookAt(RotateY(20)*RotateX(20) * Translate(0,0,30)*eye, ref, up);
-        drawDiver(point3(0,0,0), wb ,lf, rf, lb, rb ,lt, rt, lc, rc);
+        model_view = LookAt(RotateY(25)*RotateX(20)*Translate(0,0,10)*eye, ref, up);
+        model_view *= orientation;
+
+        if (TIME < sceneParachuteTime && TIME > scenePullTime){
+             bTime = 0, 
+            lfTime = TIME-scenePullTime,
+            rfTime = 0,
+            lbTime = TIME-scenePullTime,
+            rbTime = 0,
+            ltTime = 0,
+            rtTime = 0,
+            lcTime = 0,
+            rcTime = 0;
+
+            wb = Rotxyz(90,0,0), 
+            lf = Rotxyz(0,0,115*sin(lfTime)),
+            rf = Rotxyz(),
+            lb = Rotxyz(90*sin(lbTime),0,-75+120+30*sin(lbTime)),
+            rb = Rotxyz(0,0, 75-120),
+            lt = Rotxyz(0,0, 5+15),
+            rt = Rotxyz(0,0,-5-15),
+            lc = Rotxyz(75,0,0),
+            rc = Rotxyz(75,0,0);
+
+        }
+        else if (TIME > sceneParachuteTime && TIME < sceneVerticalTime){
+             bTime = (TIME-sceneParachuteTime)*90*DegreesToRadians, 
+            lfTime = (TIME-sceneParachuteTime)*90*DegreesToRadians,
+            rfTime = 0,
+            lbTime = (TIME-sceneParachuteTime)*90*DegreesToRadians,
+            rbTime = 0,
+            ltTime = 0,
+            rtTime = 0,
+            lcTime = 0,
+            rcTime = 0;
+
+            wb = Rotxyz(90-90*sin(bTime),0,0), 
+            lf = Rotxyz(0,0,115-115*sin(lfTime)),
+            rf = Rotxyz(),
+            lb = Rotxyz(90-90*sin(lbTime),0,-75+120-30*sin(lbTime)),
+            rb = Rotxyz(0,0, 75-120),
+            lt = Rotxyz(0,0, 5+15),
+            rt = Rotxyz(0,0,-5-15),
+            lc = Rotxyz();
+            rc = Rotxyz();
+
+        }
+
+        static bool drawPar = false;
+        if (TIME > sceneParachuteTime) drawPar = true;
+        drawSkybox(point3(1000,1000,1000), point3(0,-300+30*(TIME-scenePullTime),0));
+        drawDiver(point3(0,0,0), wb ,lf, rf, lb, rb ,lt, rt, lc, rc, drawPar);
+
     }
     glutSwapBuffers();
 }
